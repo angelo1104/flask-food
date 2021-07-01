@@ -1,11 +1,14 @@
 import tensorflow.keras
 from flask import Flask, request
+from flask_cors import CORS, cross_origin
 from werkzeug.utils import secure_filename
 from PIL import Image, ImageOps
 import numpy as np
 
 model = tensorflow.keras.models.load_model('keras_model.h5')
 app = Flask(__name__)
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 classes = ["apples", "apricots", "avocados", "bananas", "blackberries", "blueberries", "cantaloupes", "cherries",
            "coconuts", "figs", "grapefruits", "grapes", "guava", "kiwifruit", "lemons", "limes", "mangos", "olives",
@@ -54,28 +57,17 @@ def allowed_file(filename):
 
 
 @app.route('/', methods=["GET", "POST"])
+@cross_origin()
 def process_image():
     if request.method == "POST":
         # check if the post request has the file part
-        if 'file' not in request.files:
-            return {
-                       "message": "Please upload file"
-                   }, 400
 
         file = request.files['file']
 
-        if file.filename == '':
-            return {
-                       "message": "Please upload file"
-                   }, 400
+        
+        filename = secure_filename(file.filename)
+        return process_file(file, filename)
 
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            return process_file(file, filename)
-
-        return {
-                   "message": "Error"
-               }, 400
     return 'Hello World!'
 
 
